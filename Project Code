@@ -1,0 +1,64 @@
+#  Student Performance Analyzer & Predictor
+#  Author: Karan
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load dataset
+df = pd.read_csv('data/students.csv')
+
+# Add binary pass/fail column
+df['pass'] = np.where(df['G3'] >= 10, 1, 0)
+
+# Show first few rows
+print("📄 First 5 Rows:")
+print(df.head())
+
+# Visualize pass/fail distribution
+sns.countplot(data=df, x='pass', palette='Set2')
+plt.title("Pass/Fail Distribution")
+plt.xlabel("Pass (1) / Fail (0)")
+plt.ylabel("Number of Students")
+plt.show()
+
+# Correlation heatmap
+corr = df.corr(numeric_only=True)
+plt.figure(figsize=(10, 6))
+sns.heatmap(corr, annot=True, cmap='coolwarm')
+plt.title("Correlation Between Features")
+plt.show()
+
+# Select features and target
+features = ['studytime', 'failures', 'absences', 'G1', 'G2']
+X = df[features]
+y = df['pass']
+
+# Standardize features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled, y, test_size=0.2, random_state=42
+)
+
+# Train logistic regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Predict and evaluate
+y_pred = model.predict(X_test)
+print("\n Accuracy:", accuracy_score(y_test, y_pred))
+print("\n Classification Report:\n", classification_report(y_test, y_pred))
+
+# Predict custom input: [studytime, failures, absences, G1, G2]
+sample = scaler.transform([[2, 1, 3, 11, 12]])
+prediction = model.predict(sample)[0]
+print("\n Custom Prediction (Student will {}):".format("Pass" if prediction else "Fail"))
